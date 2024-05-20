@@ -19,10 +19,9 @@ io.on("connection", (socket) => {
     console.log(`Client joined room ${roomID}`);
   });
 
-  socket.on("publicKey", (data) => {
-    const { roomID, publicKey } = data;
-    console.log(`Received public key for room ${roomID}: ${publicKey}`);
-    io.to(roomID).emit("publicKey", publicKey);
+  socket.on("message", (roomID, data) => {
+    console.log(`Received message for room ${roomID}: ${JSON.stringify(data)}`);
+    io.to(roomID).emit("message", data);
   });
 
   socket.on("disconnect", () => {
