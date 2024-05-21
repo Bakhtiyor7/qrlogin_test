@@ -24,6 +24,18 @@ io.on("connection", (socket) => {
     io.to(roomID).emit("message", data);
   });
 
+  socket.on("walletPublicKey", (roomID, data) => {
+    console.log(
+      `Received walletPublicKey for room ${roomID}: ${JSON.stringify(data)}`
+    );
+    io.to(roomID).emit("walletPublicKey", data);
+  });
+
+  socket.on("encryptedMessage", (roomID, data) => {
+    console.log(`Received encryptedMessage for room ${roomID}: ${data}`);
+    io.to(roomID).emit("encryptedMessage", data);
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected");
   });
