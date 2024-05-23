@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
 import QRCode from "qrcode.react";
@@ -33,6 +34,7 @@ const encryptMessage = (sharedSecret, message) => {
 const decryptMessage = (sharedSecret, encryptedMessage) => {
   const bytes = CryptoJS.AES.decrypt(encryptedMessage, sharedSecret);
   const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+  console.log("decrypted message:", decrypted);
   return decrypted;
 };
 

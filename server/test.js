@@ -24,34 +24,18 @@ io.on("connection", (socket) => {
     io.to(roomID).emit("message", data);
   });
 
-  socket.on("messageToSign", (roomID, data) => {
-    console.log(
-      `Received sign message for room ${roomID}: ${JSON.stringify(data)}`
-    );
-    io.to(roomID).emit("message", data);
-  });
-
-  socket.on("signedMessage", (roomId, data) => {
-    console.log(
-      `Recieved signed message for room ${roomId}: ${JSON.stringify(data)}`
-    );
-    io.to(roomId).emit("signedMessage", data);
-  });
-
-  socket.on("leaveRoom", (roomId) => {
-    socket.leave(roomId);
-    console.log(`user left room ${roomId}`);
-    // 방이 비어 있는지 확인하고 비어 있으면 자동으로 삭제됨
-    if (io.sockets.adapter.rooms.get(roomId) === undefined) {
-      console.log(`Room ${roomId} is empty and will be destroyed`);
-    }
-  });
-
   socket.on("walletPublicKey", (roomID, data) => {
     console.log(
       `Received walletPublicKey for room ${roomID}: ${JSON.stringify(data)}`
     );
     io.to(roomID).emit("walletPublicKey", data);
+  });
+
+  socket.on("walletAddresses", (roomID, data) => {
+    console.log(
+      `Received walletAddresses for room ${roomID}: ${JSON.stringify(data)}`
+    );
+    io.to(roomID).emit("walletAddresses", data);
   });
 
   socket.on("encryptedMessage", (roomID, data) => {

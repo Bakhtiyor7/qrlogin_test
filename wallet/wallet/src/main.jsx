@@ -1,106 +1,58 @@
+// eslint-disable-next-line no-unused-vars
 import React, { useState } from "react";
-import io from "socket.io-client";
+import Wallet from "./wallet";
 import { createRoot } from "react-dom/client";
-import CryptoJS from "crypto-js";
-import { Buffer } from "buffer";
 import "./index.css";
 
-// Polyfill for Buffer in the browser
-window.Buffer = window.Buffer || Buffer;
-
-const generateKeyPair = () => {
-  const privateKey = CryptoJS.lib.WordArray.random(32).toString(
-    CryptoJS.enc.Hex
-  );
-  const publicKey = CryptoJS.SHA256(privateKey).toString(CryptoJS.enc.Hex);
-  return { privateKey, publicKey };
-};
-
-const deriveSharedSecret = (privateKey, publicKey) => {
-  const sharedSecret = CryptoJS.SHA256(privateKey + publicKey).toString(
-    CryptoJS.enc.Hex
-  );
-  return sharedSecret;
-};
-
-const encryptMessage = (sharedSecret, message) => {
-  const encrypted = CryptoJS.AES.encrypt(message, sharedSecret).toString();
-  return encrypted;
-};
-
-const decryptMessage = (sharedSecret, encryptedMessage) => {
-  const bytes = CryptoJS.AES.decrypt(encryptedMessage, sharedSecret);
-  const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-  return decrypted;
-};
-
 const App = () => {
+  const [wallet, setWallet] = useState(null);
   const [connected, setConnected] = useState(false);
-  const [roomId, setRoomId] = useState("");
-  const [publicKey, setPublicKey] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
-  const [socket, setSocket] = useState(null);
-  const [sharedSecret, setSharedSecret] = useState(null);
   const [deeplink, setDeeplink] = useState("");
+  const [roomId, setRoomId] = useState("");
+  const [dappPublicKey, setDappPublicKey] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
+
+  const handleInputChange = (e) => {
+    const data = e.target.value;
+    setDeeplink(data);
+
+    if (data) {
+      const urlParams = new URLSearchParams(data.split("?")[1]);
+      const roomId = urlParams.get("roomId");
+      const dappPublicKey = urlParams.get("publicKey");
+
+      setRoomId(roomId);
+      setDappPublicKey(dappPublicKey);
+      console.log("Parsed data:", data);
+    }
+  };
 
   const handleConnect = () => {
-    const urlParams = new URLSearchParams(deeplink.split("?")[1]);
-    const roomId = urlParams.get("roomId");
-    const dappPublicKey = urlParams.get("publicKey");
-
-    if (roomId && dappPublicKey) {
-      setRoomId(roomId);
-
-      const { privateKey, publicKey } = generateKeyPair();
-      setPrivateKey(privateKey);
-      setPublicKey(publicKey);
-
-      const newSocket = io("http://localhost:3000");
-      newSocket.on("connect", () => {
-        console.log("Connected to Socket.io server");
-        newSocket.emit("joinRoom", roomId);
-        setConnected(true);
-      });
-      newSocket.on("disconnect", () => {
-        console.log("Disconnected from Socket.io server");
-        setConnected(false);
-      });
-      newSocket.on("encryptedMessage", (message) => {
-        const decryptedMessage = decryptMessage(sharedSecret, message);
-        console.log("Decrypted message:", decryptedMessage);
-      });
-
-      setSocket(newSocket);
-
-      const sharedSecret = deriveSharedSecret(privateKey, dappPublicKey);
-      console.log("Shared Secret:", sharedSecret);
-      setSharedSecret(sharedSecret);
+    if (walletAddress && roomId && dappPublicKey) {
+      const newWallet = new Wallet(walletAddress);
+      newWallet.connectToServer("http://localhost:3000", roomId, dappPublicKey);
+      setWallet(newWallet);
+      setConnected(true);
     }
   };
 
-  const handleSendPublicKey = () => {
-    if (socket && publicKey) {
-      socket.emit("walletPublicKey", roomId, { publicKey });
-      console.log("Sent public key to dapp:", publicKey);
-    } else {
-      console.log("Socket is not connected or public key is missing.");
+  const handleDisconnect = () => {
+    if (wallet) {
+      wallet.disconnect();
+      setConnected(false);
+      setWallet(null);
     }
   };
 
-  const handleSendMessage = () => {
-    if (sharedSecret && socket) {
-      const message = "Hello World from Wallet";
-      const encryptedMessage = encryptMessage(sharedSecret, message);
-      socket.emit("encryptedMessage", roomId, encryptedMessage);
-      console.log("Sent encrypted message to dapp:", encryptedMessage);
-    } else {
-      console.log("Shared secret or socket is not available.");
+  const handleSignMessage = () => {
+    if (wallet) {
+      wallet.messageToSign();
     }
   };
 
   return (
     <div
-      className="App"
+      className="WalletComponent"
       style={{
         display: "flex",
         alignItems: "center",
@@ -112,18 +64,30 @@ const App = () => {
       <h1>Wallet</h1>
       <input
         type="text"
-        placeholder="Enter deeplink"
+        placeholder="QR data"
         value={deeplink}
-        onChange={(e) => setDeeplink(e.target.value)}
+        onChange={handleInputChange}
+        disabled={connected}
       />
-      <button onClick={handleConnect} disabled={connected}>
+      <input
+        type="text"
+        placeholder="Wallet Address"
+        value={walletAddress}
+        onChange={(e) => setWalletAddress(e.target.value)}
+        disabled={connected}
+      />
+      <button
+        onClick={handleConnect}
+        disabled={!deeplink || !walletAddress || connected}
+      >
         Connect to Server
       </button>
-      <button onClick={handleSendPublicKey} disabled={!connected}>
-        Send Public Key
+
+      <button onClick={handleDisconnect} disabled={!connected}>
+        Disconnect
       </button>
-      <button onClick={handleSendMessage} disabled={!sharedSecret}>
-        Send Encrypted Message
+      <button onClick={handleSignMessage} disabled={!connected}>
+        Sign Message
       </button>
     </div>
   );
