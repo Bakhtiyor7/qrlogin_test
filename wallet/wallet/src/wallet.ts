@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 import CryptoService from "./CryptoService";
+import CryptoJS from "crypto-js";
 
 class Wallet {
   private privateKey: string;
@@ -9,9 +10,12 @@ class Wallet {
   private walletAddress: string;
   private dappPublicKey: string;
   private signMessage: string;
+  private sharedSecret: string;
 
   constructor(walletAddress: string) {
     const { privateKey, publicKey } = CryptoService.generateKeys();
+    console.log("private key:", privateKey);
+    console.log("public key:", publicKey);
     this.privateKey = privateKey;
     this.publicKey = publicKey;
     this.walletAddress = walletAddress;
@@ -19,6 +23,7 @@ class Wallet {
     this.roomId = "";
     this.dappPublicKey = "";
     this.signMessage = "";
+    this.sharedSecret = "";
   }
 
   public connectToServer(
@@ -52,6 +57,17 @@ class Wallet {
         this.sendWalletAddress();
       }
     });
+
+    //
+    this.deriveSharedSecret();
+  }
+
+  // create a shared secret
+  private deriveSharedSecret() {
+    this.sharedSecret = CryptoJS.SHA256(
+      this.privateKey + this.dappPublicKey
+    ).toString(CryptoJS.enc.Hex);
+    console.log("Derived shared secret:", this.sharedSecret);
   }
 
   public messageToSign() {
@@ -67,8 +83,13 @@ class Wallet {
     }
   }
 
-  public sendWalletAddress() {
+  public async sendWalletAddress() {
+    const ecryptedAddress = await CryptoService.encrypt(
+      this.walletAddress,
+      this.sharedSecret
+    );
     this.socket.emit("walletAddress", this.roomId, {
+      // TODO: encrypt wallet address
       address: this.walletAddress,
     });
     console.log("Sent wallet address to dapp:", this.walletAddress);
