@@ -11,6 +11,7 @@ const App = () => {
   const [roomId, setRoomId] = useState("");
   const [dappPublicKey, setDappPublicKey] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
+  const [messageToSign, setMessageToSign] = useState("");
 
   const handleInputChange = (e) => {
     const data = e.target.value;
@@ -31,6 +32,11 @@ const App = () => {
     if (walletAddress && roomId && dappPublicKey) {
       const newWallet = new Wallet(walletAddress);
       newWallet.connectToServer("http://localhost:3000", roomId, dappPublicKey);
+
+      newWallet.socket.on("messageToSign", (message) => {
+        setMessageToSign(message);
+      });
+
       setWallet(newWallet);
       setConnected(true);
     }
@@ -89,6 +95,21 @@ const App = () => {
       <button onClick={handleSignMessage} disabled={!connected}>
         Sign Message
       </button>
+      {messageToSign && (
+        <div
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            marginTop: "10px",
+            borderRadius: "5px",
+            maxWidth: "300px",
+            wordWrap: "break-word",
+          }}
+        >
+          <h3>Message to Sign:</h3>
+          <p>{messageToSign}</p>
+        </div>
+      )}
     </div>
   );
 };

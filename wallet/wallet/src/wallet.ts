@@ -5,7 +5,7 @@ import CryptoJS from "crypto-js";
 class Wallet {
   private privateKey: string;
   public publicKey: string;
-  private socket: any;
+  public socket: any;
   private roomId: string;
   private walletAddress: string;
   private dappPublicKey: string;
