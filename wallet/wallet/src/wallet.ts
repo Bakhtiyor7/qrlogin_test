@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 import CryptoService from "./CryptoService";
 import CryptoJS from "crypto-js";
 
-class Wallet {
+class WalletLoginModule {
   private privateKey: string;
   public publicKey: string;
   public socket: any;
@@ -12,13 +12,14 @@ class Wallet {
   private signMessage: string;
   private sharedSecret: string;
 
-  constructor(walletAddress: string) {
-    const { privateKey, publicKey } = CryptoService.generateKeys();
-    console.log("private key:", privateKey);
-    console.log("public key:", publicKey);
-    this.privateKey = privateKey;
-    this.publicKey = publicKey;
-    this.walletAddress = walletAddress;
+  // constructor(walletAddress: string) {
+  constructor() {
+    // const { privateKey, publicKey } = CryptoService.generateKeys();
+    // console.log("private key:", privateKey);
+    // console.log("public key:", publicKey);
+    // this.privateKey = privateKey;
+    // this.publicKey = publicKey;
+    // this.walletAddress = walletAddress;
     this.socket = null;
     this.roomId = "";
     this.dappPublicKey = "";
@@ -52,11 +53,11 @@ class Wallet {
     });
 
     // confirm the verification, send the wallet address if true
-    this.socket.on("verifySignature", (isValid: boolean) => {
-      if (isValid) {
-        this.sendWalletAddress();
-      }
-    });
+    // this.socket.on("verifySignature", (isValid: boolean) => {
+    //   if (isValid) {
+    //     this.sendWalletAddress();
+    //   }
+    // });
 
     //
     this.deriveSharedSecret();
@@ -70,14 +71,24 @@ class Wallet {
     console.log("Derived shared secret:", this.sharedSecret);
   }
 
-  public messageToSign() {
+  public messageToSign(keypair: any) {
     if (this.signMessage) {
-      const signature = CryptoService.sign(this.signMessage, this.privateKey);
+      const signature = CryptoService.sign(
+        this.signMessage,
+        keypair.privateKey
+      );
       this.socket.emit("signedMessage", this.roomId, {
         signature,
-        publicKey: this.publicKey,
+        publicKey: keypair.publicKey,
+        address: keypair.address,
+        etc: "...",
       });
-      this.signMessage = "";
+
+      // this.signMessage = "";
+
+      return new Promise((resolve, reject) => {
+        resolve(null);
+      });
     } else {
       console.log("No message to sign");
     }
@@ -107,4 +118,4 @@ class Wallet {
   }
 }
 
-export default Wallet;
+export default WalletLoginModule;
