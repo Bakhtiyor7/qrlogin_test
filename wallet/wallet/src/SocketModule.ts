@@ -9,7 +9,7 @@ class SocketModule {
   private roomId: string;
   private walletAddress: string;
   private dappPublicKey: string;
-  private signMessage: string;
+  private messageToBeSigned: string;
   private sharedSecret: string;
 
   // constructor(walletAddress: string) {
@@ -23,7 +23,7 @@ class SocketModule {
     this.socket = null;
     this.roomId = "";
     this.dappPublicKey = "";
-    this.signMessage = "";
+    this.messageToBeSigned = "";
     this.sharedSecret = "";
   }
   v;
@@ -47,8 +47,9 @@ class SocketModule {
     });
 
     // Receive the message to be signed
-    this.socket.on("messageToSign", (message: string) => {
-      this.signMessage = message;
+    this.socket.on("messageSend", (message: string) => {
+      console.log("message: ", message);
+      this.messageToBeSigned = message;
       console.log("Received message to sign:", message);
     });
 
@@ -73,15 +74,18 @@ class SocketModule {
 
   // send request message to DAPP
   public requestMessage() {
+    console.log("sending the request!");
     this.socket.emit("requestMessage", this.roomId, {
       message: "Request message",
     });
+    console.log("requst sent");
   }
 
-  public messageToSign(keypair: any) {
-    if (this.signMessage) {
+  // sign
+  public signMessage(keypair: any) {
+    if (this.messageToBeSigned) {
       const signature = CryptoService.sign(
-        this.signMessage,
+        this.messageToBeSigned,
         keypair.privateKey
       );
       this.socket.emit("signedMessage", this.roomId, {
@@ -91,7 +95,7 @@ class SocketModule {
         etc: "...",
       });
 
-      // this.signMessage = "";
+      // this.messageToBeSigned = "";
 
       return new Promise((resolve, reject) => {
         resolve(null);

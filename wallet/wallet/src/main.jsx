@@ -1,7 +1,8 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from "react";
-import Wallet from "./wallet";
+import SocketModule from "./SocketModule";
 import { createRoot } from "react-dom/client";
+import Modal from "react-modal";
 import "./index.css";
 
 const App = () => {
@@ -12,6 +13,13 @@ const App = () => {
   const [dappPublicKey, setDappPublicKey] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [messageToSign, setMessageToSign] = useState("");
+  const [isWalletModalOpen, setWalletModalOpen] = useState(false);
+  const [isSignModalOpen, setSignModalOpen] = useState(false);
+  const [keypair, setKeypair] = useState({
+    privateKey: "",
+    publicKey: "",
+    address: "",
+  });
 
   const handleInputChange = (e) => {
     const data = e.target.value;
@@ -21,24 +29,31 @@ const App = () => {
       const urlParams = new URLSearchParams(data.split("?")[1]);
       const roomId = urlParams.get("roomId");
       const dappPublicKey = urlParams.get("publicKey");
+      const messageToSign = urlParams.get("messageToSign");
 
       setRoomId(roomId);
       setDappPublicKey(dappPublicKey);
+      setMessageToSign(messageToSign);
       console.log("Parsed data:", data);
     }
   };
 
   const handleConnect = () => {
     if (walletAddress && roomId && dappPublicKey) {
-      const newWallet = new Wallet(walletAddress);
+      const newWallet = new SocketModule();
       newWallet.connectToServer("http://localhost:3000", roomId, dappPublicKey);
 
+      // Listen for the message to sign
       newWallet.socket.on("messageToSign", (message) => {
         setMessageToSign(message);
+        setSignModalOpen(true); // Open the sign modal when message is received
       });
 
+      // Set the wallet instance and mark as connected
       setWallet(newWallet);
       setConnected(true);
+      setWalletModalOpen(false); // Close the wallet modal
+      newWallet.requestMessage();
     }
   };
 
@@ -52,8 +67,25 @@ const App = () => {
 
   const handleSignMessage = () => {
     if (wallet) {
-      wallet.messageToSign();
+      wallet.signMessage(keypair);
+      setSignModalOpen(false); // Close the sign modal after signing
     }
+  };
+
+  const openWalletModal = () => {
+    setWalletModalOpen(true);
+  };
+
+  const closeWalletModal = () => {
+    setWalletModalOpen(false);
+  };
+
+  const openSignModal = () => {
+    setSignModalOpen(true);
+  };
+
+  const closeSignModal = () => {
+    setSignModalOpen(false);
   };
 
   return (
@@ -82,34 +114,51 @@ const App = () => {
         onChange={(e) => setWalletAddress(e.target.value)}
         disabled={connected}
       />
-      <button
-        onClick={handleConnect}
-        disabled={!deeplink || !walletAddress || connected}
-      >
-        Connect to Server
+      <button onClick={openWalletModal} disabled={connected}>
+        Choose Wallet and Connect
       </button>
 
       <button onClick={handleDisconnect} disabled={!connected}>
         Disconnect
       </button>
-      <button onClick={handleSignMessage} disabled={!connected}>
-        Sign Message
-      </button>
-      {messageToSign && (
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            marginTop: "10px",
-            borderRadius: "5px",
-            maxWidth: "300px",
-            wordWrap: "break-word",
-          }}
-        >
-          <h3>Message to Sign:</h3>
-          <p>{messageToSign}</p>
-        </div>
-      )}
+
+      <Modal
+        isOpen={isWalletModalOpen}
+        onRequestClose={closeWalletModal}
+        contentLabel="Choose Wallet Modal"
+      >
+        <h2>Choose Wallet</h2>
+        <button onClick={handleConnect}>Connect</button>
+      </Modal>
+
+      <Modal
+        isOpen={isSignModalOpen}
+        onRequestClose={closeSignModal}
+        contentLabel="Sign Message Modal"
+      >
+        <h2>Sign Message</h2>
+        <p>{messageToSign}</p>
+        <input
+          type="text"
+          placeholder="Private Key"
+          onChange={(e) =>
+            setKeypair({ ...keypair, privateKey: e.target.value })
+          }
+        />
+        <input
+          type="text"
+          placeholder="Public Key"
+          onChange={(e) =>
+            setKeypair({ ...keypair, publicKey: e.target.value })
+          }
+        />
+        <input
+          type="text"
+          placeholder="Wallet Address"
+          onChange={(e) => setKeypair({ ...keypair, address: e.target.value })}
+        />
+        <button onClick={handleSignMessage}>Sign</button>
+      </Modal>
     </div>
   );
 };

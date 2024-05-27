@@ -47,16 +47,34 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("walletPublicKey", (roomID, data) => {
+  // socket.on("walletPublicKey", (roomId, data) => {
+  //   console.log(
+  //     `Received walletPublicKey for room ${roomId}: ${JSON.stringify(data)}`
+  //   );
+  //   io.to(roomId).emit("walletPublicKey", data);
+  // });
+
+  // socket.on("encryptedMessage", (roomId, data) => {
+  //   console.log(`Received encryptedMessage for room ${roomId}: ${data}`);
+  //   io.to(roomId).emit("encryptedMessage", data);
+  // });
+
+  // zigap =============
+
+  socket.on("messageSend", (roomId, data) => {
     console.log(
-      `Received walletPublicKey for room ${roomID}: ${JSON.stringify(data)}`
+      `Received request message for room ${roomId}: ${JSON.stringify(data)}`
     );
-    io.to(roomID).emit("walletPublicKey", data);
+    io.to(roomId).emit("messageSend", data);
   });
 
-  socket.on("encryptedMessage", (roomID, data) => {
-    console.log(`Received encryptedMessage for room ${roomID}: ${data}`);
-    io.to(roomID).emit("encryptedMessage", data);
+  // dapp ===================
+
+  socket.on("requestMessage", (roomId, data) => {
+    console.log(
+      `Received request message for room ${roomId}: ${JSON.stringify(data)}`
+    );
+    io.to(roomId).emit("requestMessage", data);
   });
 
   socket.on("disconnect", () => {
