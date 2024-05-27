@@ -28,7 +28,7 @@ const App = () => {
     if (data) {
       const urlParams = new URLSearchParams(data.split("?")[1]);
       const roomId = urlParams.get("roomId");
-      const dappPublicKey = urlParams.get("publicKey");
+      // const dappPublicKey = urlParams.get("publicKey");
       const messageToSign = urlParams.get("messageToSign");
 
       setRoomId(roomId);
@@ -39,9 +39,9 @@ const App = () => {
   };
 
   const handleConnect = () => {
-    if (walletAddress && roomId && dappPublicKey) {
+    if (walletAddress && roomId) {
       const newWallet = new SocketModule();
-      newWallet.connectToServer("http://localhost:3000", roomId, dappPublicKey);
+      newWallet.connectToServer("http://localhost:3000", roomId);
 
       // Listen for the message to sign
       newWallet.socket.on("messageToSign", (message) => {

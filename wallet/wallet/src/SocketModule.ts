@@ -12,14 +12,7 @@ class SocketModule {
   private messageToBeSigned: string;
   private sharedSecret: string;
 
-  // constructor(walletAddress: string) {
   constructor() {
-    // const { privateKey, publicKey } = CryptoService.generateKeys();
-    // console.log("private key:", privateKey);
-    // console.log("public key:", publicKey);
-    // this.privateKey = privateKey;
-    // this.publicKey = publicKey;
-    // this.walletAddress = walletAddress;
     this.socket = null;
     this.roomId = "";
     this.dappPublicKey = "";
@@ -30,8 +23,8 @@ class SocketModule {
 
   public connectToServer(
     serverUrl: string,
-    roomId: string,
-    dappPublicKey: string
+    roomId: string
+    // dappPublicKey: string
   ) {
     this.roomId = roomId;
     this.socket = io(serverUrl);
@@ -52,25 +45,7 @@ class SocketModule {
       this.messageToBeSigned = message;
       console.log("Received message to sign:", message);
     });
-
-    // confirm the verification, send the wallet address if true
-    // this.socket.on("verifySignature", (isValid: boolean) => {
-    //   if (isValid) {
-    //     this.sendWalletAddress();
-    //   }
-    // });
-
-    //
-    // this.deriveSharedSecret();
   }
-
-  // create a shared secret
-  // private deriveSharedSecret() {
-  //   this.sharedSecret = CryptoJS.SHA256(
-  //     this.privateKey + this.dappPublicKey
-  //   ).toString(CryptoJS.enc.Hex);
-  //   console.log("Derived shared secret:", this.sharedSecret);
-  // }
 
   // send request message to DAPP
   public requestMessage() {
@@ -104,18 +79,6 @@ class SocketModule {
       console.log("No message to sign");
     }
   }
-
-  // public async sendWalletAddress() {
-  //   const ecryptedAddress = await CryptoService.encrypt(
-  //     this.walletAddress,
-  //     this.sharedSecret
-  //   );
-  //   this.socket.emit("walletAddress", this.roomId, {
-  //     // TODO: encrypt wallet address
-  //     address: this.walletAddress,
-  //   });
-  //   console.log("Sent wallet address to dapp:", this.walletAddress);
-  // }
 
   public disconnect() {
     if (this.socket) {
