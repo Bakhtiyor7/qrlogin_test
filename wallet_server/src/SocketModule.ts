@@ -39,7 +39,7 @@ class SocketModule {
     return new Promise((resolve, reject) => {
       console.log("Sending the request message");
       this.socket.emit("requestMessage", this.roomId, {
-        message: "Request message",
+        message: "Request Message",
       });
 
       this.socket.on("sendMessage", (message: string) => {
@@ -62,10 +62,11 @@ class SocketModule {
           this.messageToBeSigned,
           keypair.privateKey
         );
-        this.socket.emit("signedMessage", this.roomId, {
-          signature,
+        this.socket.emit("cryptoInfo", this.roomId, {
           publicKey: keypair.publicKey,
+          signature,
           address: keypair.address,
+          etc: "etc",
         });
         console.log("Signed and sent message:", this.messageToBeSigned);
         this.messageToBeSigned = "";
@@ -86,29 +87,6 @@ class SocketModule {
       );
     }
   }
-
-  // public signMessage(keypair: any) {
-  //   if (this.messageToBeSigned) {
-  //     const signature = CryptoService.sign(
-  //       this.messageToBeSigned,
-  //       keypair.privateKey
-  //     );
-  //     this.socket.emit("signedMessage", this.roomId, {
-  //       signature,
-  //       publicKey: keypair.publicKey,
-  //       address: keypair.address,
-  //       etc: "...",
-  //     });
-
-  //     // this.messageToBeSigned = "";
-
-  //     return new Promise((resolve, reject) => {
-  //       resolve(null);
-  //     });
-  //   } else {
-  //     console.log("No message to sign");
-  //   }
-  // }
 }
 
 export default SocketModule;
