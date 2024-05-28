@@ -42,7 +42,7 @@ const App = () => {
     if (walletAddress && roomId) {
       const newWallet = new SocketModule();
       try {
-        await newWallet.connectToServer("http://localhost:8090", roomId);
+        await newWallet.connectToServer("http://159.138.233.132:8080", roomId);
         setWallet(newWallet);
         setConnected(true);
         setWalletModalOpen(false); // Close the wallet modal
