@@ -5,12 +5,14 @@ import { createRoot } from "react-dom/client";
 import Modal from "react-modal";
 import "./index.css";
 
+Modal.setAppElement("#root");
+
 const App = () => {
   const [wallet, setWallet] = useState(null);
   const [connected, setConnected] = useState(false);
   const [deeplink, setDeeplink] = useState("");
   const [roomId, setRoomId] = useState("");
-  const [dappPublicKey, setDappPublicKey] = useState("");
+  // const [dappPublicKey, setDappPublicKey] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [messageToSign, setMessageToSign] = useState("");
   const [isWalletModalOpen, setWalletModalOpen] = useState(false);
@@ -28,32 +30,28 @@ const App = () => {
     if (data) {
       const urlParams = new URLSearchParams(data.split("?")[1]);
       const roomId = urlParams.get("roomId");
-      // const dappPublicKey = urlParams.get("publicKey");
-      const messageToSign = urlParams.get("messageToSign");
 
       setRoomId(roomId);
-      setDappPublicKey(dappPublicKey);
-      setMessageToSign(messageToSign);
+
       console.log("Parsed data:", data);
     }
   };
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
+    console.log("wallet Address:", walletAddress);
     if (walletAddress && roomId) {
       const newWallet = new SocketModule();
-      newWallet.connectToServer("http://localhost:3000", roomId);
-
-      // Listen for the message to sign
-      newWallet.socket.on("messageToSign", (message) => {
+      try {
+        await newWallet.connectToServer("http://localhost:8090", roomId);
+        setWallet(newWallet);
+        setConnected(true);
+        setWalletModalOpen(false); // Close the wallet modal
+        const message = await newWallet.requestMessage();
         setMessageToSign(message);
-        setSignModalOpen(true); // Open the sign modal when message is received
-      });
-
-      // Set the wallet instance and mark as connected
-      setWallet(newWallet);
-      setConnected(true);
-      setWalletModalOpen(false); // Close the wallet modal
-      newWallet.requestMessage();
+        setSignModalOpen(true); // Open the sign modal when the message is received
+      } catch (error) {
+        console.error("Error connecting or requesting message:", error);
+      }
     }
   };
 
@@ -65,10 +63,14 @@ const App = () => {
     }
   };
 
-  const handleSignMessage = () => {
+  const handleSignMessage = async () => {
     if (wallet) {
-      wallet.signMessage(keypair);
-      setSignModalOpen(false); // Close the sign modal after signing
+      try {
+        await wallet.signMessage(keypair);
+        setSignModalOpen(false); // Close the sign modal after signing
+      } catch (error) {
+        console.error("Error signing message:", error);
+      }
     }
   };
 
@@ -80,9 +82,9 @@ const App = () => {
     setWalletModalOpen(false);
   };
 
-  const openSignModal = () => {
-    setSignModalOpen(true);
-  };
+  // const openSignModal = () => {
+  //   setSignModalOpen(true);
+  // };
 
   const closeSignModal = () => {
     setSignModalOpen(false);
