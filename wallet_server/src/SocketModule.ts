@@ -85,6 +85,16 @@ class SocketModule {
       );
     }
   }
+
+  // send wallet data without sign
+  public sendWalletData(walletData: any): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.socket.emit("addressProvide", this.roomId, {
+        address: walletData.address,
+      });
+      resolve();
+    });
+  }
 }
 
 export default SocketModule;
